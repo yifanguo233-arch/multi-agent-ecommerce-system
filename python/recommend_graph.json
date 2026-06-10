@@ -1,0 +1,91 @@
+﻿{
+    "request_id":  "7b3c4190-0be4-4953-b56d-4f29a36a5595",
+    "user_id":  "u_demo_001",
+    "products":  [
+                     {
+                         "product_id":  "P001",
+                         "name":  "iPhone 16 Pro",
+                         "category":  "ææº",
+                         "price":  7999.0,
+                         "description":  "",
+                         "brand":  "Apple",
+                         "seller_id":  "S01",
+                         "stock":  500,
+                         "tags":  [
+                                      "æè°",
+                                      "æ°å"
+                                  ],
+                         "score":  0.0,
+                         "image_url":  ""
+                     },
+                     {
+                         "product_id":  "P002",
+                         "name":  "åä¸º Mate 70",
+                         "category":  "ææº",
+                         "price":  5999.0,
+                         "description":  "",
+                         "brand":  "åä¸º",
+                         "seller_id":  "S02",
+                         "stock":  300,
+                         "tags":  [
+                                      "æè°",
+                                      "å½äº§"
+                                  ],
+                         "score":  0.0,
+                         "image_url":  ""
+                     },
+                     {
+                         "product_id":  "P003",
+                         "name":  "AirPods Pro 3",
+                         "category":  "è³æº",
+                         "price":  1899.0,
+                         "description":  "",
+                         "brand":  "Apple",
+                         "seller_id":  "S01",
+                         "stock":  1000,
+                         "tags":  [
+                                      "éåª",
+                                      "æ çº¿"
+                                  ],
+                         "score":  0.0,
+                         "image_url":  ""
+                     },
+                     {
+                         "product_id":  "P004",
+                         "name":  "Sony WH-1000XM6",
+                         "category":  "è³æº",
+                         "price":  2499.0,
+                         "description":  "",
+                         "brand":  "Sony",
+                         "seller_id":  "S03",
+                         "stock":  200,
+                         "tags":  [
+                                      "å¤´æ´",
+                                      "éåª"
+                                  ],
+                         "score":  0.0,
+                         "image_url":  ""
+                     },
+                     {
+                         "product_id":  "P005",
+                         "name":  "iPad Air M3",
+                         "category":  "å¹³æ¿",
+                         "price":  4799.0,
+                         "description":  "",
+                         "brand":  "Apple",
+                         "seller_id":  "S01",
+                         "stock":  400,
+                         "tags":  [
+                                      "å­¦ä¹ ",
+                                      "åå\u0085¬"
+                                  ],
+                         "score":  0.0,
+                         "image_url":  ""
+                     }
+                 ],
+    "marketing_copies":  [
+
+                         ],
+    "experiment_group":  "control",
+    "total_latency_ms":  4149.8
+}

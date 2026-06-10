@@ -1,0 +1,6 @@
+ecommerce_checkpoints.db
+ecommerce_checkpoints.db-shm
+ecommerce_checkpoints.db-wal
+.test_checkpoints/
+.codex_tmp/
+tmp_uvicorn_*.log

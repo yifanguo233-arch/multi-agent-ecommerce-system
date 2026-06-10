@@ -1,0 +1,137 @@
+﻿{
+    "request_id":  "f113c01e-01a5-4f4f-9d7a-c03fe30a34a9",
+    "user_id":  "u_demo_001",
+    "products":  [
+                     {
+                         "product_id":  "P001",
+                         "name":  "iPhone 16 Pro",
+                         "category":  "ææº",
+                         "price":  7999.0,
+                         "description":  "",
+                         "brand":  "Apple",
+                         "seller_id":  "S01",
+                         "stock":  500,
+                         "tags":  [
+                                      "æè°",
+                                      "æ°å"
+                                  ],
+                         "score":  0.0,
+                         "image_url":  ""
+                     },
+                     {
+                         "product_id":  "P002",
+                         "name":  "åä¸º Mate 70",
+                         "category":  "ææº",
+                         "price":  5999.0,
+                         "description":  "",
+                         "brand":  "åä¸º",
+                         "seller_id":  "S02",
+                         "stock":  300,
+                         "tags":  [
+                                      "æè°",
+                                      "å½äº§"
+                                  ],
+                         "score":  0.0,
+                         "image_url":  ""
+                     },
+                     {
+                         "product_id":  "P003",
+                         "name":  "AirPods Pro 3",
+                         "category":  "è³æº",
+                         "price":  1899.0,
+                         "description":  "",
+                         "brand":  "Apple",
+                         "seller_id":  "S01",
+                         "stock":  1000,
+                         "tags":  [
+                                      "éåª",
+                                      "æ çº¿"
+                                  ],
+                         "score":  0.0,
+                         "image_url":  ""
+                     },
+                     {
+                         "product_id":  "P004",
+                         "name":  "Sony WH-1000XM6",
+                         "category":  "è³æº",
+                         "price":  2499.0,
+                         "description":  "",
+                         "brand":  "Sony",
+                         "seller_id":  "S03",
+                         "stock":  200,
+                         "tags":  [
+                                      "å¤´æ´",
+                                      "éåª"
+                                  ],
+                         "score":  0.0,
+                         "image_url":  ""
+                     },
+                     {
+                         "product_id":  "P005",
+                         "name":  "iPad Air M3",
+                         "category":  "å¹³æ¿",
+                         "price":  4799.0,
+                         "description":  "",
+                         "brand":  "Apple",
+                         "seller_id":  "S01",
+                         "stock":  400,
+                         "tags":  [
+                                      "å­¦ä¹ ",
+                                      "åå\u0085¬"
+                                  ],
+                         "score":  0.0,
+                         "image_url":  ""
+                     }
+                 ],
+    "marketing_copies":  [
+
+                         ],
+    "experiment_group":  "control",
+    "agent_results":  {
+                          "user_profile":  {
+                                               "agent_name":  "user_profile",
+                                               "success":  false,
+                                               "latency_ms":  2745.258599999943,
+                                               "error":  "Error code: 401 - {\u0027type\u0027: \u0027error\u0027, \u0027error\u0027: {\u0027type\u0027: \u0027authorized_error\u0027, \u0027message\u0027: \"login fail: Please carry the API secret key in the \u0027Authorization\u0027 field of the request header (1004)\", \u0027http_code\u0027: \u0027401\u0027}, \u0027request_id\u0027: \u0027063a361e0dfd39c74740092a6f83512c\u0027}",
+                                               "data":  {
+
+                                                        },
+                                               "confidence":  0.0
+                                           },
+                          "product_rec":  {
+                                              "agent_name":  "product_rec",
+                                              "success":  true,
+                                              "latency_ms":  0.18490000002202578,
+                                              "error":  null,
+                                              "data":  {
+                                                           "candidate_count":  15,
+                                                           "reranked":  5
+                                                       },
+                                              "confidence":  0.8
+                                          },
+                          "marketing_copy":  {
+                                                 "agent_name":  "marketing_copy",
+                                                 "success":  false,
+                                                 "latency_ms":  1584.5957999990787,
+                                                 "error":  "Error code: 401 - {\u0027type\u0027: \u0027error\u0027, \u0027error\u0027: {\u0027type\u0027: \u0027authorized_error\u0027, \u0027message\u0027: \"login fail: Please carry the API secret key in the \u0027Authorization\u0027 field of the request header (1004)\", \u0027http_code\u0027: \u0027401\u0027}, \u0027request_id\u0027: \u0027063a361f48ea9f12ca5c1fcf3f9d84f1\u0027}",
+                                                 "data":  {
+
+                                                          },
+                                                 "confidence":  0.0
+                                             },
+                          "inventory":  {
+                                            "agent_name":  "inventory",
+                                            "success":  true,
+                                            "latency_ms":  0.20709999989776406,
+                                            "error":  null,
+                                            "data":  {
+                                                         "total_checked":  10,
+                                                         "available_count":  10,
+                                                         "alert_count":  1
+                                                     },
+                                            "confidence":  0.95
+                                        }
+                      },
+    "total_latency_ms":  4332.407599998987,
+    "timestamp":  "2026-04-24T13:44:00.354635"
+}
