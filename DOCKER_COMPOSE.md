@@ -1,6 +1,6 @@
 # Docker Compose 一键启动
 
-在 `python/` 目录执行：
+在仓库根目录执行：
 
 ```powershell
 docker compose up -d --build

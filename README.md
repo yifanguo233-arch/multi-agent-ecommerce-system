@@ -44,42 +44,41 @@
 ## 3. 目录结构
 
 ```text
-python/
-  main.py                         FastAPI 入口，注册 HTTP 接口和应用生命周期
-  config/
-    settings.py                   环境变量配置
-  models/
-    schemas.py                    请求、响应、用户、商品、计划、Agent 结果模型
-  agents/
-    base_agent.py                 Agent 基类，提供重试、耗时统计和 fallback
-    planner_agent.py              推荐执行计划 Agent
-    user_profile_agent.py         用户画像 Agent
-    product_rec_agent.py          商品召回和重排 Agent
-    inventory_agent.py            库存过滤 Agent
-    marketing_copy_agent.py       营销文案 Agent
-  orchestrator/
-    graph.py                      LangGraph 状态图工作流
-    supervisor.py                 Supervisor 编排器，作为可选/降级路径
-  services/
-    auto_planner.py               规则 + 可选 LLM 的计划生成器
-    memory_context.py             用户上下文构建
-    feature_store.py              Redis FeatureStore
-    redis_runtime.py              Redis 连接初始化
-    product_repository.py         SQLAlchemy 商品库、库存读取和 demo seed
-    rag_vector_search.py          本地 RAG/向量检索实现
-    tool_registry.py              工具注册与执行
-    ab_test.py                    A/B 实验和 Thompson Sampling 状态
-    metrics.py                    内存指标和 Prometheus 指标
-  scripts/
-    run_workflow_demo.py          LangGraph 工作流逐步输出 demo
-    smoke_test.ps1                启动服务并跑一组冒烟检查
-  tests/
-    test_*.py                     单元测试
-  requirements.txt                运行依赖
-  requirements-dev.txt            开发/测试依赖
-  Dockerfile                      简单容器构建文件
-  compose.yaml                    API、Redis、Postgres 一键启动配置
-  .env.example                    环境变量示例
+main.py                         FastAPI 入口，注册 HTTP 接口和应用生命周期
+config/
+  settings.py                   环境变量配置
+models/
+  schemas.py                    请求、响应、用户、商品、计划、Agent 结果模型
+agents/
+  base_agent.py                 Agent 基类，提供重试、耗时统计和 fallback
+  planner_agent.py              推荐执行计划 Agent
+  user_profile_agent.py         用户画像 Agent
+  product_rec_agent.py          商品召回和重排 Agent
+  inventory_agent.py            库存过滤 Agent
+  marketing_copy_agent.py       营销文案 Agent
+orchestrator/
+  graph.py                      LangGraph 状态图工作流
+  supervisor.py                 Supervisor 编排器，作为可选/降级路径
+services/
+  auto_planner.py               规则 + 可选 LLM 的计划生成器
+  memory_context.py             用户上下文构建
+  feature_store.py              Redis FeatureStore
+  redis_runtime.py              Redis 连接初始化
+  product_repository.py         SQLAlchemy 商品库、库存读取和 demo seed
+  rag_vector_search.py          本地 RAG/向量检索实现
+  tool_registry.py              工具注册与执行
+  ab_test.py                    A/B 实验和 Thompson Sampling 状态
+  metrics.py                    内存指标和 Prometheus 指标
+scripts/
+  run_workflow_demo.py          LangGraph 工作流逐步输出 demo
+  smoke_test.ps1                启动服务并跑一组冒烟检查
+tests/
+  test_*.py                     单元测试
+requirements.txt                运行依赖
+requirements-dev.txt            开发/测试依赖
+Dockerfile                      简单容器构建文件
+compose.yaml                    API、Redis、Postgres 一键启动配置
+.env.example                    环境变量示例
 ```
 
 ## 4. 启动方式
