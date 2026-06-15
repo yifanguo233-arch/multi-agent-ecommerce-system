@@ -45,6 +45,8 @@ class PipelineState(TypedDict, total=False):
     business_goal: str
     context: dict[str, Any]
     experiment_group: str
+    experiment_config: dict[str, Any]
+    memory_hit: bool
 
     user_context: dict[str, Any]
     user_profile: dict[str, Any] | None
@@ -122,6 +124,16 @@ def _plan_dict(state: PipelineState) -> dict[str, Any]:
     return plan if isinstance(plan, dict) else {}
 
 
+def _agent_context(state: PipelineState) -> dict[str, Any]:
+    return {
+        **state.get("context", {}),
+        "user_context": state.get("user_context", {}),
+        "execution_plan": _plan_dict(state),
+        "experiment_group": state.get("experiment_group", "control"),
+        "ab_config": state.get("experiment_config", {}),
+    }
+
+
 def _to_products(items: list[dict[str, Any]]) -> list[Product]:
     out: list[Product] = []
     for item in items:
@@ -150,6 +162,7 @@ async def init_node(state: PipelineState) -> PipelineState:
         "context": state.get("context", {}),
         "business_goal": state.get("business_goal", "conversion"),
         "experiment_group": exp.get("group", "control"),
+        "experiment_config": exp.get("config", {}),
         "agent_results": {},
         "trace_steps": trace,
         "node_latency_ms": latency,
@@ -179,6 +192,7 @@ async def planner_node(state: PipelineState) -> PipelineState:
         trace[0]["plan_version"] = plan.plan_version
         return {
             "user_context": ctx,
+            "memory_hit": getattr(memory_engine, "feature_store", None) is not None,
             "execution_plan": plan.model_dump(mode="json"),
             "plan_version": plan.plan_version,
             "plan_payload": plan.model_dump(mode="json"),
@@ -201,6 +215,7 @@ async def planner_node(state: PipelineState) -> PipelineState:
             "plan_version": default_plan.plan_version,
             "plan_payload": default_plan.model_dump(mode="json"),
             "plan_error": str(exc),
+            "memory_hit": False,
             "selected_tools": [],
             "tool_outputs": {},
             "trace_steps": trace,
@@ -259,11 +274,7 @@ async def tool_executor_node(state: PipelineState) -> PipelineState:
 
 async def user_profile_node(state: PipelineState) -> PipelineState:
     start = time.perf_counter()
-    merged_context = {
-        **state.get("context", {}),
-        "user_context": state.get("user_context", {}),
-        "execution_plan": _plan_dict(state),
-    }
+    merged_context = _agent_context(state)
     result = await user_profile_agent.run(user_id=state["user_id"], context=merged_context)
     trace, latency = _node_meta("user_profile", start)
     return {
@@ -281,11 +292,7 @@ async def user_profile_node(state: PipelineState) -> PipelineState:
 async def product_recall_node(state: PipelineState) -> PipelineState:
     start = time.perf_counter()
     # 初始 recall 不强依赖 user profile，先使用 request context、memory context 和 execution plan。
-    merged_context = {
-        **state.get("context", {}),
-        "user_context": state.get("user_context", {}),
-        "execution_plan": _plan_dict(state),
-    }
+    merged_context = _agent_context(state)
     result = await product_rec_agent.run(
         user_profile=None,
         context=merged_context,
@@ -310,11 +317,7 @@ async def merge_phase1_node(state: PipelineState) -> PipelineState:
 
 async def rerank_node(state: PipelineState) -> PipelineState:
     start = time.perf_counter()
-    merged_context = {
-        **state.get("context", {}),
-        "user_context": state.get("user_context", {}),
-        "execution_plan": _plan_dict(state),
-    }
+    merged_context = _agent_context(state)
     candidates = _to_products(state.get("raw_products", []))
     result = await product_rec_agent.run(
         user_profile=_to_user_profile(state.get("user_profile")),
@@ -336,11 +339,7 @@ async def rerank_node(state: PipelineState) -> PipelineState:
 
 async def inventory_node(state: PipelineState) -> PipelineState:
     start = time.perf_counter()
-    merged_context = {
-        **state.get("context", {}),
-        "user_context": state.get("user_context", {}),
-        "execution_plan": _plan_dict(state),
-    }
+    merged_context = _agent_context(state)
     products = _to_products(state.get("raw_products", []))
     result = await inventory_agent.run(products=products, context=merged_context)
     available_ids = list(getattr(result, "available_products", []))
@@ -417,11 +416,7 @@ async def retention_offer_node(state: PipelineState) -> PipelineState:
 
 async def marketing_copy_node(state: PipelineState) -> PipelineState:
     start = time.perf_counter()
-    merged_context = {
-        **state.get("context", {}),
-        "user_context": state.get("user_context", {}),
-        "execution_plan": _plan_dict(state),
-    }
+    merged_context = _agent_context(state)
     products = _to_products(state.get("final_products", []))
     result = await marketing_copy_agent.run(
         user_profile=_to_user_profile(state.get("user_profile")),

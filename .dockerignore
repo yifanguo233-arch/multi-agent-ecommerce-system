@@ -1,7 +1,12 @@
 .venv/
+.git/
+.codex_tmp/
+python/
 __pycache__/
 */__pycache__/
 .pytest_cache/
+pytest-cache-files-*/
+test_checkpoints_tmp/
 .idea/
 .vscode/
 
@@ -11,7 +16,9 @@ __pycache__/
 *.log
 
 .env
-ecommerce.db
+*.db
+*.db-shm
+*.db-wal
 tmp_*.log
 
 postgres_data/

@@ -6,40 +6,116 @@ ProductRecAgent 结构图
       |
       v
 候选来源
-  +-- 有 candidates：直接作为重排候选
-  +-- 无 candidates：从 ProductRepository 数据库商品目录召回
+  +-- 有 candidates：直接进入重排
+  +-- 无 candidates：从 ProductRepository 商品库召回
       |
       v
 _recall()
-  +-- retrieve_strategy=semantic_first/hybrid -> RAG / embedding 语义召回
-  +-- retrieve_strategy=inventory_first -> 库存优先排序
-  +-- retrieve_strategy=hot_first -> 热门标签、score、库存排序
-  +-- 用户偏好类目 -> 再做偏好排序
+  +-- retrieve_strategy 决定候选怎么来
+  +-- 目标：尽量别漏掉可能相关商品
       |
       v
 _rerank()
-  +-- 先按 rerank_focus 做本地排序偏置
-  +-- 再把用户画像、execution_plan、RAG 文档和候选商品交给 LLM 精排
+  +-- rerank_focus 决定候选内部怎么排
+  +-- 目标：把最合适的商品排到前面
       |
-      +-- 成功：返回 LLM 排序后的 product_id
-      +-- 解析失败：retry 一次格式修复
-      +-- 仍失败：按候选顺序规则兜底
+      v
+ProductRecResult.products
 
-输出去向：
-  ProductRecResult.products
-      -> InventoryAgent 检查库存
-      -> rerank/filter/MarketingCopy 后续节点继续使用
+一、输入
 
-LLM 与兜底：
-  LLM 只负责精排候选 ID，不负责生成商品。
-  LLM 不可用或输出不可解析时，返回候选列表前 N 个。
+核心输入：
+- `user_profile`：用户画像，主要提供 `preferred_categories`、`price_range`、`segments`
+- `context`：请求上下文，里面会带 `user_context`、`execution_plan`、`ab_config`、`trigger_event`、`current_item`
+- `execution_plan`：真正控制召回和重排策略的计划对象
+- `num_items`：最终返回商品数
+- `candidates`：如果上游已给候选，则跳过召回，直接重排
 
-核心分支：
-  retrieve_strategy 控制召回；rerank_focus 控制本地重排偏置。
+二、输出
 
-当前边界：
-  运行时主要依赖数据库商品目录 + 本地 RAG/可选 embedding。
-  recall_strategy 字段仍是兼容性描述，不代表每次都真实执行所有召回方式。
+主输出：
+- `ProductRecResult.products`：最终排序后的商品列表
+
+辅助输出：
+- `data.candidate_count`：候选池大小
+- `data.candidate_product_ids`：候选商品 ID
+- `data.returned_product_ids`：最终返回商品 ID
+- `data.rerank_strategy`：本次实际使用的重排方式
+- `data.llm_called`：是否调用了 LLM
+- `data.fallback`：是否走了兜底
+
+三、召回做什么
+
+召回解决的问题是“哪些商品应该进入候选池”。它优先追求覆盖面，不追求第一步就排出最终顺序。
+
+召回策略与因素层级：
+
+1. `semantic_first` / `hybrid`
+   - 第一层：语义相关性
+   - 第二层：命中偏好类目
+   - 第三层：是否有库存
+   - 说明：query 会综合近期行为、意图类目、长期偏好类目、当前商品信息
+
+2. `inventory_first`
+   - 第一层：库存量 `stock`
+   - 第二层：命中偏好类目
+   - 第三层：是否有库存
+
+3. `hot_first`
+   - 第一层：是否命中热门标签
+   - 第二层：商品基础分 `score`
+   - 第三层：库存量 `stock`
+   - 第四层：命中偏好类目
+
+说明：
+- 这里没有统一数值权重，更准确地说是“优先级层级”
+- 召回关心的是“找谁”，所以标准更粗
+
+四、重排做什么
+
+重排解决的问题是“候选里谁应该排前面”。它不会扩大候选池，只决定候选内部顺序。
+
+本地规则重排的因素层级：
+
+1. `price_first`
+   - 第一层：价格更低优先
+
+2. `brand_first`
+   - 第一层：是否命中用户偏好品牌
+   - 第二层：价格更低优先
+
+3. `diversity`
+   - 第一层：按类目拉开分布
+   - 说明：这是轻量多样性偏置，不是复杂多样性模型
+
+4. `balanced` / `intent_match`
+   - 本地规则不强行改很多顺序
+   - 更多交给 LLM 综合判断
+
+LLM 重排参考因素：
+- 用户兴趣和意图匹配
+- 偏好类目
+- 价格区间适配
+- `user_context`
+- `execution_plan`
+- RAG 检索片段
+- 候选商品的 `category`、`price`、`brand`、`stock`、`score`、`tags`
+
+从当前 prompt 看，LLM 更像按下面层级综合判断：
+- 第一层：兴趣 / 意图匹配
+- 第二层：价格适配与多样性
+- 第三层：库存、品牌、标签和基础属性
+
+五、召回和重排的区别
+
+- 召回关注覆盖面，宁可多捞一些候选，也不要漏掉可能相关商品
+- 重排关注排序质量，要把最合适的商品排到前面
+- 召回标准更粗，重排标准更细，也更依赖用户画像和策略计划
+
+六、兜底
+
+- LLM 只输出候选商品 ID 的顺序，不生成新商品
+- 如果 LLM 不可用或输出不可解析，就按当前候选顺序返回前 N 个
 """
 
 
@@ -158,6 +234,7 @@ class ProductRecAgent(BaseAgent):
                 "candidate_product_ids": [p.product_id for p in candidates],
                 "reranked": len(ranked_ids),
                 "returned_product_ids": [p.product_id for p in final_products[:num_items]],
+                "rerank_strategy": str(rerank_meta.get("rerank_strategy", "")),
                 "llm_called": bool(rerank_meta.get("llm_called", False)),
                 "fallback": bool(rerank_meta.get("fallback", False)),
                 "fallback_reason": str(rerank_meta.get("fallback_reason", "")),
@@ -303,10 +380,17 @@ class ProductRecAgent(BaseAgent):
         num_items: int,
         retrieved_docs: list[str] | None = None,
     ) -> tuple[list[str], dict[str, Any]]:
-        if not profile and not context.get("user_context"):
+        configured_rerank_strategy = self._configured_ab_rerank_strategy(context)
+        rerank_strategy = configured_rerank_strategy or "llm"
+        if rerank_strategy == "rule_based":
+            return self._rule_based_rerank(candidates, context, num_items)
+
+        force_llm = configured_rerank_strategy == "llm"
+        if not force_llm and not profile and not context.get("user_context"):
             return (
                 [p.product_id for p in candidates[:num_items]],
                 {
+                    "rerank_strategy": rerank_strategy,
                     "llm_called": False,
                     "fallback": True,
                     "fallback_reason": "insufficient_profile_context",
@@ -319,6 +403,7 @@ class ProductRecAgent(BaseAgent):
             return (
                 [p.product_id for p in candidates[:num_items]],
                 {
+                    "rerank_strategy": rerank_strategy,
                     "llm_called": False,
                     "fallback": True,
                     "fallback_reason": "llm_api_key_not_configured",
@@ -402,6 +487,7 @@ class ProductRecAgent(BaseAgent):
             return (
                 [str(x) for x in parsed],
                 {
+                    "rerank_strategy": rerank_strategy,
                     "llm_called": True,
                     "fallback": False,
                     "fallback_reason": "",
@@ -418,6 +504,7 @@ class ProductRecAgent(BaseAgent):
             return (
                 [p.product_id for p in candidates[:num_items]],
                 {
+                    "rerank_strategy": rerank_strategy,
                     "llm_called": True,
                     "fallback": True,
                     "fallback_reason": f"llm_rerank_error_or_parse_failure: {exc}",
@@ -428,6 +515,57 @@ class ProductRecAgent(BaseAgent):
                     "retry_succeeded": False,
                 },
             )
+
+    def _rule_based_rerank(
+        self,
+        candidates: list[Product],
+        context: dict[str, Any],
+        num_items: int,
+    ) -> tuple[list[str], dict[str, Any]]:
+        candidate_summary = self._candidate_summary(candidates)
+        biased = self._apply_plan_rerank_bias(candidate_summary, context)
+        ranked_ids = [str(item.get("id", "")) for item in biased if item.get("id")]
+        if len(ranked_ids) < len(candidates):
+            seen = set(ranked_ids)
+            ranked_ids.extend(p.product_id for p in candidates if p.product_id not in seen)
+        return (
+            ranked_ids[:num_items],
+            {
+                "rerank_strategy": "rule_based",
+                "llm_called": False,
+                "fallback": False,
+                "fallback_reason": "",
+                "llm_parse_ok": False,
+                "raw_response": "",
+                "retry_used": False,
+                "retry_attempts": 0,
+                "retry_succeeded": False,
+            },
+        )
+
+    def _candidate_summary(self, candidates: list[Product]) -> list[dict[str, Any]]:
+        return [
+            {
+                "id": p.product_id,
+                "name": p.name,
+                "category": p.category,
+                "price": p.price,
+                "brand": p.brand,
+                "stock": p.stock,
+                "score": p.score,
+                "tags": p.tags,
+            }
+            for p in candidates
+        ]
+
+    @staticmethod
+    def _configured_ab_rerank_strategy(context: dict[str, Any]) -> str | None:
+        ab_config = context.get("ab_config", {})
+        if isinstance(ab_config, dict):
+            strategy = str(ab_config.get("rerank", "")).strip().lower()
+            if strategy in {"rule_based", "llm"}:
+                return strategy
+        return None
 
     def _build_rerank_repair_messages(
         self,

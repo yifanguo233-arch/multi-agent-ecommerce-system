@@ -80,6 +80,12 @@ class SupervisorOrchestrator:
         )
 
         experiment = self.ab_engine.assign(request.user_id)
+        experiment_group = str(experiment.get("group", "control"))
+        experiment_config = (
+            experiment.get("config", {})
+            if isinstance(experiment.get("config", {}), dict)
+            else {}
+        )
         user_context = await self.memory_engine.build(
             user_id=request.user_id,
             scene=request.scene,
@@ -97,6 +103,8 @@ class SupervisorOrchestrator:
             **request.context,
             "user_context": user_context_payload,
             "execution_plan": plan.model_dump(),
+            "experiment_group": experiment_group,
+            "ab_config": experiment_config,
         }
 
         # Phase 1：并行执行 user profile 和 product recall。
@@ -156,7 +164,7 @@ class SupervisorOrchestrator:
         planner_mode = str(planner_meta.get("planner_mode", "unknown"))
         fallback_reason = str(planner_meta.get("planner_error", ""))
         latency_bucket = self._latency_bucket(total_latency)
-        ab_group = experiment.get("group", "control")
+        ab_group = experiment_group
         plan_replay_key = f"{request.user_id}:{request.scene}:{plan.plan_version}:{planner_mode}:{ab_group}"
 
         logger.info(
@@ -172,7 +180,7 @@ class SupervisorOrchestrator:
             user_id=request.user_id,
             products=final_products,
             marketing_copies=copies,
-            experiment_group=experiment.get("group", "control"),
+            experiment_group=experiment_group,
             context_version="v1",
             memory_hit=True,
             plan_version=plan.plan_version,
@@ -190,6 +198,7 @@ class SupervisorOrchestrator:
                 "user_context": user_context_payload,
                 "execution_plan": plan.model_dump(),
                 "planner_result": planner_result.model_dump(),
+                "ab_config": experiment_config,
             },
             agent_results={
                 "planner": planner_result,

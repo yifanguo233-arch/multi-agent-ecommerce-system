@@ -27,3 +27,9 @@ tmp_uvicorn_*.log
 # IDE
 .idea/
 .vscode/
+
+# Local run artifacts
+.runs/
+.team/
+README.previous.local.md
+README2.previous.local.md

@@ -70,6 +70,30 @@ def test_metrics_recording():
     assert stats["control"]["ctr"]["count"] == 2
 
 
+def test_event_click_auto_records_ab_outcome(monkeypatch):
+    import main
+    from models.schemas import BehaviorEventRequest
+
+    engine = ABTestEngine()
+    monkeypatch.setattr(main, "ab_engine", engine)
+
+    event = BehaviorEventRequest(
+        user_id="u_ab_auto_demo",
+        behavior_type="click",
+        item_id="P008",
+        metadata={"experiment_id": "rec_strategy", "group": "control"},
+    )
+    result = main._auto_record_ab_from_event(event)
+
+    group = next(g for g in engine.experiments["rec_strategy"].groups if g.name == "control")
+    stats = engine.get_stats("rec_strategy")
+    assert result["success_recorded"] is True
+    assert result["success"] is True
+    assert result["group"] == "control"
+    assert group.successes == 2
+    assert stats["control"]["click"]["count"] == 1
+
+
 if __name__ == "__main__":
     test_consistent_assignment()
     test_distribution()

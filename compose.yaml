@@ -15,7 +15,7 @@ services:
       ECOM_PRODUCT_SEED_COUNT: "240"
       ECOM_PRODUCT_CATALOG_CACHE_LIMIT: "500"
       ECOM_ORCHESTRATION_MODE: ${ECOM_ORCHESTRATION_MODE:-graph}
-      ECOM_AB_TEST_ENABLED: ${ECOM_AB_TEST_ENABLED:-false}
+      ECOM_AB_TEST_ENABLED: ${ECOM_AB_TEST_ENABLED:-true}
       ECOM_LLM_API_KEY: ${ECOM_LLM_API_KEY:?ECOM_LLM_API_KEY must be set in .env for LLM-enabled Compose}
       ECOM_LLM_BASE_URL: ${ECOM_LLM_BASE_URL:-https://api.minimaxi.com/v1}
       ECOM_LLM_MODEL: ${ECOM_LLM_MODEL:-MiniMax-M2.7}
@@ -50,7 +50,7 @@ services:
       POSTGRES_USER: ecommerce
       POSTGRES_PASSWORD: ecommerce
     ports:
-      - "5432:5432"
+      - "15432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
