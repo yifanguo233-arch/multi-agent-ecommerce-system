@@ -26,7 +26,7 @@ ECOM_AGENT_TIMEOUT_PLANNER
 ECOM_PLANNER_LLM_MAX_TOKENS
 ```
 
-`compose.yaml` 已经要求 `ECOM_LLM_API_KEY` 必须存在。也就是说，如果 `.env` 没有配置 key，`docker compose up` 会直接报错，而不是悄悄禁用大模型。
+`compose.yaml` 默认支持无 `ECOM_LLM_API_KEY` 启动，适合面试官快速复现；此时 Planner 会走规则计划，其他 LLM Agent 在没有 key 时会使用 fallback。需要启用 LLM 链路时，在 `.env` 中配置 `ECOM_LLM_API_KEY`，并设置 `ECOM_PLANNER_USE_LLM=true`。
 
 Compose 同时会把 API 配成：
 
@@ -37,7 +37,7 @@ ECOM_PRODUCT_AUTO_SEED=true
 ECOM_PRODUCT_SEED_COUNT=240
 ECOM_PRODUCT_CATALOG_CACHE_LIMIT=500
 ECOM_ORCHESTRATION_MODE=graph
-ECOM_PLANNER_USE_LLM=${ECOM_PLANNER_USE_LLM:-true}
+ECOM_PLANNER_USE_LLM=${ECOM_PLANNER_USE_LLM:-false}
 ECOM_RAG_ENABLED=${ECOM_RAG_ENABLED:-false}
 ```
 

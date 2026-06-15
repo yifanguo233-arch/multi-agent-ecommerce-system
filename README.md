@@ -59,7 +59,7 @@ flowchart TD
 - Recall / Rerank：从商品库读取候选商品，结合用户兴趣、RAG 检索结果、A/B 配置和执行计划进行排序。
 - Reflection：当结果过少、文案数量不匹配或类目过于单一时，自动调整计划并重新进入部分流程。
 - Tool Registry：提供轻量工具机制，例如提升热门商品、增强多样性、切换留存保护策略。
-- Tool Policy：根据 plan 和 reflection hint 选择是否执行工具，把策略变化写回 `plan_payload`。
+- Tool Router / Strategy Policy：根据 Planner 输出和 Reflection 提示选择是否执行策略工具，例如热门提升、多样性增强、留存保护等，并把策略变化写回 `plan_payload`。
 - Trace / Replay：记录每个节点的输入产出摘要、耗时和错误，并用 SQLite checkpoint 支持按 `thread_id` 或 `request_id` 回放。
 
 ## 快速启动
@@ -81,9 +81,10 @@ Copy-Item .env.example .env
 本地无 LLM API Key 也可以运行，系统会走规则 fallback。常用配置：
 
 ```text
-ECOM_LLM_API_KEY=your_api_key_here
+ECOM_LLM_API_KEY=
 ECOM_LLM_BASE_URL=https://api.minimaxi.com/v1
 ECOM_LLM_MODEL=MiniMax-M2.7
+ECOM_PLANNER_USE_LLM=false
 ECOM_DATABASE_URL=sqlite:///./ecommerce.db
 ECOM_PRODUCT_AUTO_SEED=true
 ECOM_PRODUCT_SEED_COUNT=240
@@ -111,6 +112,8 @@ Docker Compose 会同时启动 API、Redis 和 PostgreSQL：
 ```powershell
 docker compose up -d --build
 ```
+
+Docker Compose 默认支持无 LLM API Key 启动，Planner 会先走规则计划；如需启用 LLM 链路，可在 `.env` 中配置 `ECOM_LLM_API_KEY` 并设置 `ECOM_PLANNER_USE_LLM=true`。
 
 访问地址：
 
@@ -150,8 +153,21 @@ Content-Type: application/json
 {
   "request_id": "...",
   "thread_id": "...",
-  "products": [],
-  "marketing_copies": [],
+  "products": [
+    {
+      "product_id": "P015",
+      "name": "Sony 通勤降噪耳机",
+      "category": "耳机",
+      "price": 1299,
+      "stock": 32
+    }
+  ],
+  "marketing_copies": [
+    {
+      "product_id": "P015",
+      "copy": "适合通勤场景的降噪耳机，兼顾音质与便携性。"
+    }
+  ],
   "experiment_group": "control",
   "plan_payload": {
     "retrieve_strategy": "hybrid",
